@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 import sample.Authentication.Logic.RegisterController;
 import sample.Authentication.Model.AccountType;
 import sample.Authentication.Model.Admin;
+import sample.Runner.Logic.LenderController;
 
 import java.util.Arrays;
 
@@ -15,8 +16,10 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("Authentication/UI/register.fxml"));
-        RegisterController rc = new RegisterController(AccountType.ADMIN);
+       FXMLLoader loader =new  FXMLLoader(getClass().getResource("Authentication/UI/register.fxml"));
+       Parent root=loader.load();
+        RegisterController rc = loader.getController();
+        rc.setAccountType(AccountType.ADMIN);
 
         primaryStage.setTitle("Machine Lender");
         primaryStage.setScene(new Scene(root, 600, 400));

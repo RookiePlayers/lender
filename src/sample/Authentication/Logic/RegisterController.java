@@ -36,7 +36,7 @@ public class RegisterController {
     User regUser;
     AccountType accountType;
 
-    public RegisterController(AccountType type) {
+    public void setAccountType(AccountType type){
         this.accountType = type;
     }
 
@@ -140,6 +140,7 @@ public class RegisterController {
         if(new PasswordValidator(1).Validate(password)){
             return validateRegister(username);
         }
+        return true;
     }
 
     public boolean validateRegister(String username){
