@@ -12,6 +12,7 @@ public class PasswordValidator extends Validator{
 
     @Override
     public boolean Validate(String s) {
+        System.out.println(s.matches(passPattern));
         return s.matches(passPattern);
     }
 }

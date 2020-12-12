@@ -13,15 +13,20 @@ import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 import sample.Authentication.Model.AccountType;
 import sample.Authentication.Model.Admin;
+import sample.Authentication.Model.Customer;
 import sample.Authentication.Model.User;
+import sample.Main;
+import sample.Runner.IAdapter;
+import sample.Statics;
 
 import java.io.*;
 
 import java.net.URL;
 import java.util.*;
 
-public class RegisterController {
+public class RegisterController implements IAdapter {
 
+    public Label infoLabel;
     @FXML
     private TextField firstnameField;
     @FXML
@@ -31,155 +36,133 @@ public class RegisterController {
     @FXML
     private Button registerButton, loginButton;
     @FXML
+    private Label passwordHint;
+    @FXML
+    private Label usernameHint;
+    @FXML
     private Label msgr;
-    ArrayList<ArrayList<String>> user = new ArrayList<ArrayList<String>>();
     User regUser;
     AccountType accountType;
+    ArrayList<User>users=new ArrayList<>();
+    FileManager io=new FileManager();
 
     public void setAccountType(AccountType type){
         this.accountType = type;
+
     }
 
-    public void registerButtonOnAction(ActionEvent event){
+    public void registerButtonOnAction(ActionEvent event) throws IOException {
 
         if(validate(firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText())) {
             //new PasswordValidator(1).Validate(regPasswordField.getText())
              if(this.accountType==AccountType.ADMIN){
                         this.registerAsAdmin();
+                        infoLabel.setText("Logged In as: "+regUsenameField.getText());
+                 passwordHint.setStyle("-fx-text-fill: #93bf6c;");
                     }
                     else{
                         this.registerAsCustomer();
-                    }
+                 infoLabel.setText("Logged In as: "+regUsenameField.getText());
+                 passwordHint.setStyle("-fx-text-fill: #93bf6c;");
+                 ArrayList<User> users= new ArrayList<>();
+                 users.add(Statics.CurrentUser);
+                 io.serializeToFile("currentUser.ser",users);
+                 Main.currentStage.setFXMLScene("Home/UI/home.fxml",new LoginController());
+
+             }
+        }else{
+            infoLabel.setText("Registration Has Failed");
+            passwordHint.setStyle("-fx-text-fill: red;");
         }
 
-
-//        if(!firstnameField.getText().isBlank() && !regUsenameField.getText().isBlank() && !regPasswordField.getText().isBlank()) {
-//            if (validate(firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText())) {
-//                createUserDatabase(firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText());
-//            } else {
-//                //make sure the fields adhere to the regex rules (add string response
-//                System.out.println("It does not follow rules.");
-//                msgr.setText("Username already taken");
-//            }
-//        } else {
-//            // one or more of the fields are empty, let them know
-//            System.out.println("can't be empty bro.");
-//        }
     }
     private void  registerAsCustomer(){
+        String time = String.valueOf(System.currentTimeMillis());
+        regUser = new Customer(time, firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText(),this.accountType);
 
+        regUser.encryptPassword();
+
+        users.add(regUser);
+        Statics.CurrentUser=regUser;
+
+        io.serializeToFile("CustomerDB.ser",users);
     }
     private void registerAsAdmin() {
         String time = String.valueOf(System.currentTimeMillis());
-        regUser = new Admin(time, firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText());
+        regUser = new Admin(time, firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText(),this.accountType);
 
         regUser.encryptPassword();
-        List<User> users=readSErializedFile("AdminDB.ser");
-        serializeToFile("AdminDB.ser",users);
+
+        users.add(regUser);
+        Statics.CurrentUser=regUser;
+        io.serializeToFile("AdminDB.ser",users);
     }
-    private ArrayList<User> readSErializedFile(String path)  {
-       ArrayList<User>users=new ArrayList<>();
-        FileInputStream fis= null;
-        try {
 
-            fis = new FileInputStream(this.getClass().getResource(path).getPath());
-            ObjectInputStream ois=new ObjectInputStream(fis);
-            System.out.println("REading File...");
-            while(fis.available()!=-1){
-                User user= (User) ois.readObject();
-                users.add(user);
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return users;
-
-    }
-    private void serializeToFile(String path,List<User>users) {
-        try {
-            FileOutputStream fos = new FileOutputStream(this.getClass().getResource(path).getPath());
-            ObjectOutputStream oos=new ObjectOutputStream(fos);
-            for(User user:users){
-                oos.writeObject(user);
-                oos.reset();
-
-            }
-            oos.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void loginButtonOnAction(ActionEvent event) throws IOException {
        // Parent root = FXMLLoader.load(getClass().getResource("login.fxml"));
+        Main.currentStage.setFXMLScene("Authentication/UI/login.fxml",new LoginController());
 
-    }
-
-    public void createUserDatabase(String name, String username, String password){
-        try {
-            FileWriter fr = new FileWriter("userDatabase.txt", true);
-            BufferedWriter bw = new BufferedWriter(fr);
-            PrintWriter pw = new PrintWriter(bw);
-
-            pw.println(name + "," + username + "," + password + "," + user.size()+1);
-            pw.flush();
-
-            fr.close();
-            bw.close();
-            pw.close();
-            System.out.println("Successfully wrote to the file.");
-
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
     }
 
     private boolean validate(String name, String username, String password){
+        boolean valid =true;
         if(new PasswordValidator(1).Validate(password)){
-            return validateRegister(username);
+            passwordHint.setText("Strong");
+            passwordHint.setStyle("-fx-text-fill: green;");
+
+        }else{
+            passwordHint.setText("Weak");
+            passwordHint.setStyle("-fx-text-fill: red;");
+            valid=false;
         }
-        return true;
+        if(uniqueUsername(username)){
+            usernameHint.setText("Available");
+            usernameHint.setStyle("-fx-text-fill: green;");
+
+        }else{
+            usernameHint.setText("Not Available");
+            usernameHint.setStyle("-fx-text-fill: red;");
+            valid=false;
+        }
+
+        return valid;
     }
 
-    public boolean validateRegister(String username){
+    public boolean uniqueUsername(String username){
         //check text file to see if the specified log in exists already
-        System.out.println("does it get here? 1");
+
+       long matches=0;
+        for(User u:users){
+            System.out.println(username);
+            if(u.getUsername().equals(username))
+                matches++;
+        }
+        System.out.println(matches);
+        return matches<1;
+    }
+
+    public void registerOnManageUsers(ActionEvent actionEvent) {
+
+    }
+
+    @Override
+    public void init() {
+
         try {
-            File myObj = new File("userDatabase.txt");
-            Scanner reader = new Scanner(myObj);
-            while (reader.hasNextLine()) {
-                String data = reader.nextLine();
-                //split data by comma, into array
-                String[] tmpUser = data.split(",");
-                //convert from array to list
-                List<String> tempUser = Arrays.asList(tmpUser);
-                //convert from list to arraylist
-                ArrayList<String> tempUsr = new ArrayList<String>(tempUser);
-                user.add(tempUsr);
-            }
-            reader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+            io.readSerializedFile("AdminDB.ser");
+            users=io.users;
+            io.readSerializedFile("CustomerDB.ser");
+            users=io.users;
+        } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        for(ArrayList<String> list : user){
-            if(list.contains(username)) {
-                //username taken
-                return false;
-
-            } else {
-                //username not taken, unique
-                msgr.setText("Success");
-                System.out.println(username);
-                System.out.println(list);
-                return true;
-            }
+    @Override
+    public void custom(Object... args) {
+        if(args[0] instanceof AccountType){
+            setAccountType((AccountType) args[0]);
         }
-
-        System.out.println("does it fail 1");
-        return false;
     }
 }

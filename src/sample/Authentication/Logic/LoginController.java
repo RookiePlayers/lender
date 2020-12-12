@@ -11,7 +11,12 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.event.ActionEvent;
 import javafx.stage.Stage;
+import sample.Authentication.Model.AccountType;
+import sample.Authentication.Model.User;
+import sample.Main;
+import sample.Runner.IAdapter;
 import sample.Runner.Logic.LenderController;
+import sample.Statics;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,7 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-public class LoginController implements Initializable {
+public class LoginController implements Initializable, IAdapter {
 
     @FXML
     private Button loginButton, registerPageButton;
@@ -32,8 +37,9 @@ public class LoginController implements Initializable {
 
     String userSname, userId;
 
-    ArrayList<ArrayList<String>> user = new ArrayList<ArrayList<String>>();
 
+    ArrayList<User>users=new ArrayList<>();
+    FileManager io=new FileManager();
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
     }
@@ -71,66 +77,54 @@ public class LoginController implements Initializable {
     public void loginButtonOnAction(ActionEvent event) throws IOException {
         if(!usernameField.getText().isBlank() && !passwordField.getText().isBlank()) {
             if (validateLogin(usernameField.getText(), passwordField.getText())) {
-                loadSceneAndSendInfo();
-                Stage stage = (Stage) loginButton.getScene().getWindow();
-                stage.close();
+                messager.setText("Logged in as: "+Statics.CurrentUser);
+                ArrayList<User> users= new ArrayList<>();
+                users.add(Statics.CurrentUser);
+                messager.setStyle("-fx-text-fill: green;");
+               io.serializeToFile("currentUser.ser",users);
+                Main.currentStage.setFXMLScene("Home/UI/home.fxml",new LoginController());
             } else {
-                System.out.println(user);
+
             }
         } else {
             messager.setText("Please enter a Username AND Password");
+            messager.setStyle("-fx-text-fill: red;");
         }
     }
 
     public boolean validateLogin(String username, String password) throws IOException {
         //check text file to see if the specified log in exists already
-        try {
-            File myObj = new File("userDatabase.txt");
-            Scanner reader = new Scanner(myObj);
-            while (reader.hasNextLine()) {
-                String data = reader.nextLine();
-                //split data by comma, into array
-                String[] tmpUser = data.split(",");
-                //convert from array to list
-                List<String> tempUser = Arrays.asList(tmpUser);
-                //convert from list to arraylist
-                ArrayList<String> tempUsr = new ArrayList<String>(tempUser);
-                user.add(tempUsr);
-            }
-            reader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-
-        for(ArrayList<String> list : user){
-            if(list.contains(username)) {
-                if(list.get(2).equals(password)){
-                    //successfully logged in
-                    messager.setText("success");
-
-                    System.out.println("logged IN!!!");
-
-                    userSname = list.get(0);
-                    userId = list.get(3);
-                    //add method to send you the application
-                    return true;
-                }
-                else
-                {
-                    //correct username, wrong password
-                    messager.setText("password is wrong");
-                    return false;
-                }
-            } else {
-                //incorrect username, name doesnt exist
-                messager.setText("No user with this username exists");
-                return false;
+        for(User user : users){
+            user.decryptPassword();
+            if(username.equalsIgnoreCase(user.getUsername())&&password.equals(user.getPassword())){
+                Statics.CurrentUser=user;
+                return true;
             }
         }
+        messager.setText("User not recognized");
+        messager.setStyle("-fx-text-fill: red;");
         return false;
     }
 
-    public void registerButtonOnAction(ActionEvent actionEvent) {
+    public void registerButtonOnAction(ActionEvent actionEvent)throws IOException {
+        Main.currentStage.setFXMLScene("Authentication/UI/register.fxml",new LoginController(), AccountType.CUSTOMER);
+    }
+
+    @Override
+    public void init() {
+        Arrays.asList("AdminDB.ser","CustomerDB.ser").forEach(path->{
+            try {
+                io.readSerializedFile((String)path);
+                users.addAll(io.users);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+    }
+
+    @Override
+    public void custom(Object... args) {
+
     }
 }
