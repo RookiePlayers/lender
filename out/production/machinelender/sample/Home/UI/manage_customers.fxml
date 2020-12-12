@@ -33,7 +33,7 @@
          <bottom>
             <HBox alignment="TOP_RIGHT" prefHeight="34.0" prefWidth="587.0" spacing="10.0" BorderPane.alignment="CENTER">
                <children>
-                  <Label prefHeight="17.0" prefWidth="392.0" text="Tip: (backspace) to delete selected row, click field to edit." textFill="#8d8d8d">
+                  <Label prefHeight="17.0" prefWidth="392.0" text="Tip: (backspace) to delete selected row, click save changes to  keep changes" textFill="#8d8d8d">
                      <font>
                         <Font size="9.0" />
                      </font>

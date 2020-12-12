@@ -63,7 +63,7 @@ public class Home implements IAdapter {
         ArrayList<User> users= new ArrayList<>();
         new FileManager().serializeToFile("currentUser.ser",users);
         try {
-            Main.currentStage.setFXMLScene("Home/UI/home.fxml",new LoginController());
+            Main.currentStage.setFXMLScene("Authentication/UI/login.fxml",new LoginController());
         } catch (IOException e) {
             e.printStackTrace();
         }

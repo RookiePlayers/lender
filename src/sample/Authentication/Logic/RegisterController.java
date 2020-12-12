@@ -55,13 +55,11 @@ public class RegisterController implements IAdapter {
 
         if(validate(firstnameField.getText(), regUsenameField.getText(), regPasswordField.getText())) {
             //new PasswordValidator(1).Validate(regPasswordField.getText())
-             if(this.accountType==AccountType.ADMIN){
+             if(this.accountType==AccountType.ADMIN)
                         this.registerAsAdmin();
-                        infoLabel.setText("Logged In as: "+regUsenameField.getText());
-                 passwordHint.setStyle("-fx-text-fill: #93bf6c;");
-                    }
-                    else{
+                    else
                         this.registerAsCustomer();
+
                  infoLabel.setText("Logged In as: "+regUsenameField.getText());
                  passwordHint.setStyle("-fx-text-fill: #93bf6c;");
                  ArrayList<User> users= new ArrayList<>();
@@ -69,7 +67,7 @@ public class RegisterController implements IAdapter {
                  io.serializeToFile("currentUser.ser",users);
                  Main.currentStage.setFXMLScene("Home/UI/home.fxml",new LoginController());
 
-             }
+
         }else{
             infoLabel.setText("Registration Has Failed");
             passwordHint.setStyle("-fx-text-fill: red;");
@@ -150,10 +148,11 @@ public class RegisterController implements IAdapter {
     public void init() {
 
         try {
+
             io.readSerializedFile("AdminDB.ser");
-            users=io.users;
+            users.addAll(io.users);
             io.readSerializedFile("CustomerDB.ser");
-            users=io.users;
+            users.addAll(io.users);
         } catch (IOException e) {
             e.printStackTrace();
         }
